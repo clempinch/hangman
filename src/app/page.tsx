@@ -126,6 +126,11 @@ export default function Home() {
               guessed.push(c);
             }
           }
+          if (win) {
+            new Audio("success.mp3").play();
+          } else {
+            new Audio("good.mp3").play();
+          }
           return {
             ...gameState,
             guessed,
@@ -133,6 +138,12 @@ export default function Home() {
             win,
           };
         }
+        if (gameState.step + 1 >= 13) {
+          new Audio("fail.mp3").play();
+        } else {
+          new Audio("wrong.mp3").play();
+        }
+
         return {
           ...gameState,
           letterEntered,
