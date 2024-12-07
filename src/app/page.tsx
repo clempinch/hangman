@@ -1,113 +1,230 @@
-import Image from 'next/image'
+"use client";
+
+import { useEffect, useState } from "react";
+
+interface KeyboardEvent {
+  key: string;
+}
+
+type GameData = {
+  word: string;
+  img: string;
+};
+
+function getData(): GameData[] {
+  return [
+    {
+      word: "CAMION",
+      img: "https://upload.wikimedia.org/wikipedia/commons/3/34/Renault_T-Truck_-_E_5958KC.jpg",
+    },
+    {
+      word: "MAISON",
+      img: "https://upload.wikimedia.org/wikipedia/commons/8/80/MaisonCausapscal.JPG",
+    },
+    {
+      word: "CHOCOLAT",
+      img: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Green_and_Black%27s_dark_chocolate_bar_2.jpg/2560px-Green_and_Black%27s_dark_chocolate_bar_2.jpg",
+    },
+    {
+      word: "CHAMPIGNON",
+      img: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/Les_champions_blancs_%C3%A0_la_For%C3%AAt_Sacr%C3%A9e_de_Kpass%C3%A8.jpg/2560px-Les_champions_blancs_%C3%A0_la_For%C3%AAt_Sacr%C3%A9e_de_Kpass%C3%A8.jpg",
+    },
+    {
+      word: "VELO",
+      img: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/BmxStreet.JPG/2880px-BmxStreet.JPG",
+    },
+    {
+      word: "SALADE",
+      img: "https://upload.wikimedia.org/wikipedia/commons/2/20/Kropsla_herfst.jpg",
+    },
+    {
+      word: "ARC EN CIEL",
+      img: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/Sai_Thong_National_Park_.jpg/2880px-Sai_Thong_National_Park_.jpg",
+    },
+  ];
+}
+
+const words = [
+  "CAMION",
+  "CHOCOLAT",
+  "MAMAN",
+  "TARTINE",
+  "TOMATE",
+  "CAMPING",
+  "VOITURE",
+  "LIT",
+  "VILLAGE",
+  "MERCREDI",
+  "PIANO",
+  "PYJAMA",
+];
+
+type GameState = {
+  wordToGuess: string;
+  guessed: string[];
+  letterEntered: string[];
+  step: number;
+  win: boolean;
+};
+
+function getRandomInt(max: number) {
+  return Math.floor(Math.random() * max);
+}
+
+const allData = getData();
+const data = allData[6];
 
 export default function Home() {
+  const newGame = () => {
+    const wordToGuess = words[getRandomInt(words.length)];
+    const guessed: string[] = [];
+    for (const c of wordToGuess) {
+      if (/^[A-Z]$/.test(c)) {
+        guessed.push("_");
+      } else {
+        guessed.push(c);
+      }
+    }
+    return {
+      wordToGuess,
+      guessed,
+      letterEntered: [] as string[],
+      step: 0,
+      win: false,
+    };
+  };
+
+  const [gameState, setGameState] = useState<GameState>(newGame);
+
+  const resetGame = () => {
+    setGameState(newGame());
+  };
+
+  const handleKeyPress = (event: KeyboardEvent) => {
+    if (gameState.win || gameState.step >= 13) {
+      return gameState;
+    }
+    const character = event.key.toUpperCase();
+    if (/^[A-Z]$/.test(character)) {
+      setGameState((gameState) => {
+        if (gameState.letterEntered.includes(character)) {
+          return { ...gameState };
+        }
+        const letterEntered = [...gameState.letterEntered, character];
+        if (gameState.wordToGuess.split("").includes(character)) {
+          const guessed: string[] = [];
+          let win = true;
+          for (const c of gameState.wordToGuess) {
+            if (/^[A-Z]$/.test(c)) {
+              if (letterEntered.includes(c)) {
+                guessed.push(c);
+              } else {
+                guessed.push("_");
+                win = false;
+              }
+            } else {
+              guessed.push(c);
+            }
+          }
+          return {
+            ...gameState,
+            guessed,
+            letterEntered,
+            win,
+          };
+        }
+        return {
+          ...gameState,
+          letterEntered,
+          step: gameState.step + 1,
+          win: false,
+        };
+      });
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, []);
+
+  let img = "";
+  if (gameState.win) {
+    img = "win.jpg";
+  } else {
+    if (gameState.step == 0) {
+      img = "init.jpg";
+    } else if (gameState.step >= 13) {
+      img = "pendu_13.jpg";
+    } else {
+      img = "pendu_" + String(gameState.step).padStart(2, "0") + ".jpg";
+    }
+  }
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
+    <main className="flex min-h-screen flex-col items-center justify-between">
+      <div className="flex flex-col  items-center p-24">
+        <h1 className="m-3 text-8xl font-semibold">
+          {gameState.guessed.join(" ")}
+        </h1>
+        <img src={img} alt="Pendu" width={500} className="mt-4"></img>
+        <div className="text-4xl">{gameState.letterEntered.join(" ")}</div>
       </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
+      <button
+        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-4"
+        onClick={resetGame}
+      >
+        Nouveau jeu
+      </button>
     </main>
-  )
+  );
 }
+
+// export default function Home() {
+//   const [toGuess, setToGuess] = useState<string>(
+//     data.word
+//       .split("")
+//       .map((c) => {
+//         if (/^[A-Z]$/.test(c)) {
+//           return "_";
+//         } else {
+//           return c;
+//         }
+//       })
+//       .join(" ")
+//   );
+//   const [allChars, setAllChars] = useState<string[]>([]);
+
+//   const handleKeyPress = (event: KeyboardEvent) => {
+//     const character = event.key.toUpperCase();
+//     if (/^[A-Z]$/.test(character) && !allChars.includes(character)) {
+//       setAllChars((a) => [...a, character]);
+//     }
+//   };
+
+//   useEffect(() => {
+//     let newGuess = "";
+//     for (const c of data.word) {
+//       if (allChars.includes(c)) {
+//         newGuess += c + " ";
+//       } else if (/^[A-Z]$/.test(c)) {
+//         newGuess += "_ ";
+//       } else {
+//         newGuess += "  ";
+//       }
+//     }
+//     setToGuess(newGuess);
+//   }, [allChars]);
+
+//   useEffect(() => {
+//     window.addEventListener("keydown", handleKeyPress);
+//     return () => window.removeEventListener("keydown", handleKeyPress);
+//   }, []);
+
+//   return (
+//     <main className="flex min-h-screen flex-col items-center p-24">
+//       <img src={data.img} alt="A trouver" width={800} />
+//       <h1 className="m-3 text-8xl font-semibold">{toGuess}</h1>
+//     </main>
+//   );
+// }
